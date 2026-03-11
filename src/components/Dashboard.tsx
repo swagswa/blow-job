@@ -93,13 +93,7 @@ const WORKOUT_CYCLE: WorkoutDay[] = [
   },
 ];
 
-type HabitData = {
-  protein: boolean;
-  creatine: boolean;
-  water: boolean;
-  steps: boolean;
-  carnivore: boolean;
-};
+type HabitData = Record<string, boolean>;
 
 type ProgressRecord = {
   id?: string;
@@ -107,6 +101,24 @@ type ProgressRecord = {
   completed: boolean;
   habit_data: HabitData;
   workout_type: string;
+};
+
+const DIET_PLAN = {
+  training: [
+    { id: 'chicken_450', name: 'Куриное филе', amount: '450 г', macros: 'Б:103 Ж:9 У:0', kcal: 495 },
+    { id: 'eggs_4', name: 'Яйца (C1)', amount: '4 шт.', macros: 'Б:26 Ж:22 У:1', kcal: 310 },
+    { id: 'yogurt_140', name: 'Греческий йогурт', amount: '140 г', macros: 'Б:11 Ж:3 У:5', kcal: 95 },
+    { id: 'protein_1', name: 'Протеин', amount: '1 скуп', macros: 'Б:24 Ж:1.5 У:2.5', kcal: 120 },
+    { id: 'rice_200', name: 'Рис (сухой)', amount: '200 г', macros: 'Б:15 Ж:1 У:156', kcal: 690 },
+    { id: 'butter_10', name: 'Сливочное масло', amount: '10 г', macros: 'Б:0 Ж:8 У:0', kcal: 72 },
+  ],
+  rest: [
+    { id: 'chicken_550', name: 'Куриное филе', amount: '550 г', macros: 'Б:126 Ж:11 У:0', kcal: 605 },
+    { id: 'eggs_4_rest', name: 'Яйца (C1)', amount: '4 шт.', macros: 'Б:26 Ж:22 У:1', kcal: 310 },
+    { id: 'yogurt_140_rest', name: 'Греческий йогурт', amount: '140 г', macros: 'Б:11 Ж:3 У:5', kcal: 95 },
+    { id: 'protein_1_rest', name: 'Протеин', amount: '1 скуп', macros: 'Б:24 Ж:1.5 У:2.5', kcal: 120 },
+    { id: 'butter_10_rest', name: 'Сливочное масло', amount: '10 г', macros: 'Б:0 Ж:8 У:0', kcal: 72 },
+  ]
 };
 
 export default function Dashboard({ session }: { session: any }) {
@@ -126,8 +138,6 @@ export default function Dashboard({ session }: { session: any }) {
   const daysSinceStart = differenceInDays(currentDate, CYCLE_START_DATE);
   const cycleIndex = ((daysSinceStart % 4) + 4) % 4; // Handle negative numbers safely
   const currentWorkout = WORKOUT_CYCLE[cycleIndex];
-
-  const isCarnivoreAvailable = currentDate >= CARNIVORE_START_DATE || currentWorkout.id === "rest";
 
   useEffect(() => {
     fetchProgress(currentDate);
@@ -162,13 +172,7 @@ export default function Dashboard({ session }: { session: any }) {
         setProgress({
           date: dateStr,
           completed: false,
-          habit_data: {
-            protein: false,
-            creatine: false,
-            water: false,
-            steps: false,
-            carnivore: false,
-          },
+          habit_data: {},
           workout_type: currentWorkout.name,
         });
       }
@@ -262,7 +266,7 @@ export default function Dashboard({ session }: { session: any }) {
         return [...prev, {
           date: dateStr,
           completed: newCompleted,
-          habit_data: { protein: false, creatine: false, water: false, steps: false, carnivore: false },
+          habit_data: {},
           workout_type: workoutName
         }];
       }
@@ -278,7 +282,7 @@ export default function Dashboard({ session }: { session: any }) {
           user_id: session.user.id,
           date: dateStr,
           completed: newCompleted,
-          habit_data: record?.habit_data || { protein: false, creatine: false, water: false, steps: false, carnivore: false },
+          habit_data: record?.habit_data || {},
           workout_type: workoutName,
         },
         { onConflict: "user_id, date" },
@@ -411,10 +415,10 @@ export default function Dashboard({ session }: { session: any }) {
             <h3 className="text-lg font-bold px-2">Привычки</h3>
             <div className="grid grid-cols-2 gap-3">
               <HabitCard
-                title="Белок (140г)"
-                icon={<Flame className="w-5 h-5" />}
-                active={progress?.habit_data.protein || false}
-                onClick={() => toggleHabit("protein")}
+                title="Вода (3.5л)"
+                icon={<Droplets className="w-5 h-5" />}
+                active={progress?.habit_data.water || false}
+                onClick={() => toggleHabit("water")}
               />
               <HabitCard
                 title="Креатин (5г)"
@@ -423,10 +427,10 @@ export default function Dashboard({ session }: { session: any }) {
                 onClick={() => toggleHabit("creatine")}
               />
               <HabitCard
-                title="Вода (2.6л)"
-                icon={<Droplets className="w-5 h-5" />}
-                active={progress?.habit_data.water || false}
-                onClick={() => toggleHabit("water")}
+                title="Сон (7-8ч)"
+                icon={<Home className="w-5 h-5" />}
+                active={progress?.habit_data.sleep || false}
+                onClick={() => toggleHabit("sleep")}
               />
               <HabitCard
                 title="10к шагов"
@@ -436,64 +440,49 @@ export default function Dashboard({ session }: { session: any }) {
               />
             </div>
 
-            {/* Carnivore Mode */}
-            <div
-              onClick={() => isCarnivoreAvailable && toggleHabit("carnivore")}
-              className={cn(
-                "mt-4 p-4 rounded-2xl border flex items-center justify-between transition-all",
-                isCarnivoreAvailable
-                  ? progress?.habit_data.carnivore
-                    ? "bg-red-950/30 border-red-500/50 cursor-pointer"
-                    : "bg-zinc-900 border-white/10 cursor-pointer hover:bg-zinc-800"
-                  : "bg-zinc-900/50 border-white/5 opacity-50 cursor-not-allowed",
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "p-2 rounded-xl",
-                    progress?.habit_data.carnivore
-                      ? "bg-red-500/20 text-red-500"
-                      : "bg-zinc-800 text-zinc-400",
-                  )}
-                >
-                  <Flame className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4
+            {/* Diet Tracker */}
+            <div className="mt-8 space-y-4">
+              <div className="flex justify-between items-end px-2">
+                <h3 className="text-lg font-bold">Рацион</h3>
+                <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider bg-emerald-500/10 px-2 py-1 rounded-lg">
+                  {currentWorkout.id === "rest" ? "1200 ккал" : "1800 ккал"}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {(currentWorkout.id === "rest" ? DIET_PLAN.rest : DIET_PLAN.training).map((food) => (
+                  <div
+                    key={food.id}
+                    onClick={() => toggleHabit(food.id)}
                     className={cn(
-                      "font-bold",
-                      progress?.habit_data.carnivore
-                        ? "text-red-400"
-                        : "text-white",
+                      "p-3 rounded-2xl border flex items-center justify-between transition-all cursor-pointer",
+                      progress?.habit_data[food.id]
+                        ? "bg-emerald-950/30 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                        : "bg-zinc-900 border-white/10 hover:bg-zinc-800"
                     )}
                   >
-                    Carnivore Mode
-                  </h4>
-                  <p className="text-xs text-zinc-500">
-                    {currentWorkout.id === "rest" ? "День отдыха (Только белок)" : isCarnivoreAvailable ? "Доступно" : "Доступно с 15 мая"}
-                  </p>
-                </div>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
+                          progress?.habit_data[food.id]
+                            ? "bg-emerald-500 border-emerald-500 text-black"
+                            : "border-zinc-600 text-transparent"
+                        )}
+                      >
+                        <Check className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className={cn("font-bold text-sm", progress?.habit_data[food.id] ? "text-emerald-100" : "text-white")}>
+                          {food.name} <span className="text-zinc-500 font-normal">· {food.amount}</span>
+                        </h4>
+                        <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                          {food.macros} <span className="text-emerald-500/70 ml-1">{food.kcal} ккал</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              {isCarnivoreAvailable && (
-                <div
-                  className={cn(
-                    "w-12 h-6 rounded-full p-1 transition-colors",
-                    progress?.habit_data.carnivore
-                      ? "bg-red-500"
-                      : "bg-zinc-700",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "w-4 h-4 rounded-full bg-white transition-transform",
-                      progress?.habit_data.carnivore
-                        ? "translate-x-6"
-                        : "translate-x-0",
-                    )}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </>
@@ -510,17 +499,29 @@ export default function Dashboard({ session }: { session: any }) {
 
       {/* User Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col items-center justify-center p-3 bg-zinc-900/50 rounded-2xl border border-white/5">
-          <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider mb-1">Параметры</span>
-          <span className="text-white font-mono font-bold">180 см / 75 кг</span>
+        <div className="flex flex-col items-center justify-center p-3 bg-zinc-900/50 rounded-2xl border border-white/5 text-center">
+          <span className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider mb-1">Старт (11 марта)</span>
+          <span className="text-white font-mono font-bold text-sm">75 кг / 18%</span>
         </div>
         <div className="flex flex-col items-center justify-center p-3 bg-zinc-900/50 rounded-2xl border border-emerald-500/20 text-center">
-          <span className="text-emerald-500 text-[9px] uppercase font-bold tracking-wider mb-1">Сухая масса (18%)</span>
-          <span className="text-emerald-400 font-mono font-bold">61.5 кг</span>
+          <span className="text-emerald-500 text-[9px] uppercase font-bold tracking-wider mb-1">Прогноз (1 июня)</span>
+          <span className="text-emerald-400 font-mono font-bold text-sm">71-72 кг / 12-13%</span>
         </div>
       </div>
 
       <div className="bg-zinc-900/50 border border-emerald-500/20 rounded-2xl p-4 grid grid-cols-1 gap-3">
+        <div className="flex justify-between items-center border-b border-white/5 pb-3">
+          <span className="text-zinc-400 text-xs font-bold">ЦЕЛЕВОЙ БЕЛОК</span>
+          <span className="text-emerald-400 font-mono text-sm font-bold">150-160 г</span>
+        </div>
+        <div className="flex justify-between items-center border-b border-white/5 pb-3">
+          <span className="text-zinc-400 text-xs font-bold">ТРЕНИРОВОЧНЫЙ ДЕНЬ</span>
+          <span className="text-emerald-400 font-mono text-sm font-bold">1800 ккал</span>
+        </div>
+        <div className="flex justify-between items-center border-b border-white/5 pb-3">
+          <span className="text-zinc-400 text-xs font-bold">ДЕНЬ ОТДЫХА</span>
+          <span className="text-emerald-400 font-mono text-sm font-bold">1200 ккал</span>
+        </div>
         {GENERAL_RULES.map((rule, i) => (
           <div key={i} className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0 last:pb-0">
             <span className="text-zinc-400 text-xs font-bold">{rule.label}</span>
@@ -611,12 +612,12 @@ export default function Dashboard({ session }: { session: any }) {
               const cycleIndex = ((daysSinceStart % 4) + 4) % 4;
               const workoutName = WORKOUT_CYCLE[cycleIndex].name;
               
-              const isCarnivoreAvailableForDay = day >= CARNIVORE_START_DATE || WORKOUT_CYCLE[cycleIndex].id === "rest";
-              const totalHabits = isCarnivoreAvailableForDay ? 5 : 4;
+              const isRestDay = WORKOUT_CYCLE[cycleIndex].id === "rest";
+              const totalHabits = 4 + (isRestDay ? DIET_PLAN.rest.length : DIET_PLAN.training.length);
               const habitsCount = record ? Object.values(record.habit_data).filter(Boolean).length : 0;
 
               return (
-                <button 
+                <div 
                   key={dateStr}
                   onClick={() => {
                     setCurrentDate(day);
@@ -624,7 +625,7 @@ export default function Dashboard({ session }: { session: any }) {
                     window.scrollTo(0, 0);
                   }}
                   className={cn(
-                    "w-full text-left border rounded-2xl p-4 flex flex-col gap-3 transition-all",
+                    "w-full text-left border rounded-2xl p-4 flex flex-col gap-3 transition-all cursor-pointer",
                     isCurrentDay 
                       ? "bg-zinc-900/80 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]" 
                       : isFutureDay
@@ -698,7 +699,7 @@ export default function Dashboard({ session }: { session: any }) {
                       <div className="text-[10px] text-zinc-500 ml-auto">{habitsCount}/{totalHabits}</div>
                     </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
