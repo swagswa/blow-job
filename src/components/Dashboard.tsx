@@ -296,7 +296,7 @@ export default function Dashboard({ session }: { session: any }) {
         <p className="text-zinc-400 text-sm font-medium uppercase tracking-wider">
           Дней до 1 июня
         </p>
-        <div className="text-6xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-500">
+        <div className="text-6xl font-black tracking-tighter text-white drop-shadow-lg">
           {daysUntilTarget}
         </div>
       </div>
@@ -514,8 +514,8 @@ export default function Dashboard({ session }: { session: any }) {
           <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider mb-1">Параметры</span>
           <span className="text-white font-mono font-bold">180 см / 75 кг</span>
         </div>
-        <div className="flex flex-col items-center justify-center p-3 bg-zinc-900/50 rounded-2xl border border-emerald-500/20">
-          <span className="text-emerald-500 text-[10px] uppercase font-bold tracking-wider mb-1">Сухая масса (18% жира)</span>
+        <div className="flex flex-col items-center justify-center p-3 bg-zinc-900/50 rounded-2xl border border-emerald-500/20 text-center">
+          <span className="text-emerald-500 text-[9px] uppercase font-bold tracking-wider mb-1">Сухая масса (18%)</span>
           <span className="text-emerald-400 font-mono font-bold">61.5 кг</span>
         </div>
       </div>
@@ -556,12 +556,41 @@ export default function Dashboard({ session }: { session: any }) {
 
   const renderHistory = () => {
     const allDays = eachDayOfInterval({ start: CYCLE_START_DATE, end: TARGET_DATE });
+    const mskToday = getMSKToday();
+    
+    let completedCount = 0;
+    let missedCount = 0;
+    
+    allDays.forEach(day => {
+      const dateStr = format(day, "yyyy-MM-dd");
+      const record = history.find(r => r.date === dateStr);
+      if (record?.completed) {
+        completedCount++;
+      } else if (day < mskToday) {
+        missedCount++;
+      }
+    });
     
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-        <div className="text-center space-y-2 mt-4 mb-8">
+        <div className="text-center space-y-2 mt-4 mb-6">
           <h2 className="text-3xl font-black tracking-tight">ВСЕ ДНИ</h2>
-          <p className="text-zinc-400 text-sm">Полный план до 1 июня. Нажмите на день для просмотра.</p>
+          <p className="text-zinc-400 text-sm">Полный план до 1 июня.</p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mb-6">
+          <div className="bg-zinc-900/50 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+            <span className="text-zinc-500 text-[9px] font-bold uppercase tracking-wider mb-1">Всего</span>
+            <span className="text-white font-black text-xl">{allDays.length}</span>
+          </div>
+          <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+            <span className="text-emerald-500 text-[9px] font-bold uppercase tracking-wider mb-1">Сделано</span>
+            <span className="text-emerald-400 font-black text-xl">{completedCount}</span>
+          </div>
+          <div className="bg-red-950/30 border border-red-500/20 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+            <span className="text-red-500 text-[9px] font-bold uppercase tracking-wider mb-1">Пропуски</span>
+            <span className="text-red-400 font-black text-xl">{missedCount}</span>
+          </div>
         </div>
 
         {historyLoading ? (
@@ -603,52 +632,54 @@ export default function Dashboard({ session }: { session: any }) {
                         : "bg-zinc-900/50 border-white/5 hover:bg-zinc-800/80"
                   )}
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-black text-zinc-500 uppercase tracking-wider">День {dayNumber}</span>
-                        <span className="text-xs font-bold text-zinc-400">•</span>
-                        <span className="text-xs font-bold text-zinc-400 capitalize">{format(day, "d MMM, EEE", { locale: ru })}</span>
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+                        <span className="text-[11px] font-black text-zinc-500 uppercase tracking-wider whitespace-nowrap">День {dayNumber}</span>
+                        <span className="text-[11px] font-bold text-zinc-400 hidden sm:inline">•</span>
+                        <span className="text-[11px] font-bold text-zinc-400 capitalize whitespace-nowrap">{format(day, "d MMM, EEE", { locale: ru })}</span>
                       </div>
-                      <p className={cn("font-bold", isFutureDay ? "text-zinc-500" : "text-white")}>
+                      <p className={cn("font-bold text-sm sm:text-base truncate", isFutureDay ? "text-zinc-500" : "text-white")}>
                         {workoutName}
                       </p>
+                      
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        {record?.completed ? (
+                          <div className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 w-fit">
+                            <Check className="w-3 h-3" /> ВЫПОЛНЕНО
+                          </div>
+                        ) : isCurrentDay ? (
+                          <div className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold w-fit">
+                            СЕГОДНЯ
+                          </div>
+                        ) : isFutureDay ? (
+                          <div className="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[9px] font-bold w-fit">
+                            ОЖИДАЕТСЯ
+                          </div>
+                        ) : (
+                          <div className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[9px] font-bold w-fit">
+                            ПРОПУСК
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      {isCurrentDay && !record?.completed && (
-                        <div className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-lg text-[10px] font-bold">
-                          СЕГОДНЯ
-                        </div>
+                    <button 
+                      onClick={(e) => toggleWorkoutCompletion(e, day, record, workoutName)}
+                      className={cn(
+                        "w-10 h-10 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 mt-1",
+                        record?.completed 
+                          ? "bg-emerald-500 border-emerald-500 text-black" 
+                          : "border-zinc-600 text-transparent hover:border-emerald-500"
                       )}
-                      {isFutureDay && !record?.completed && (
-                        <div className="bg-zinc-800 text-zinc-500 px-2 py-1 rounded-lg text-[10px] font-bold">
-                          ОЖИДАЕТСЯ
-                        </div>
-                      )}
-                      {!isFutureDay && !isCurrentDay && !record?.completed && (
-                        <div className="bg-red-500/10 text-red-400 px-2 py-1 rounded-lg text-[10px] font-bold">
-                          ПРОПУСК
-                        </div>
-                      )}
-                      
-                      <button 
-                        onClick={(e) => toggleWorkoutCompletion(e, day, record, workoutName)}
-                        className={cn(
-                          "w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors shrink-0",
-                          record?.completed 
-                            ? "bg-emerald-500 border-emerald-500 text-black" 
-                            : "border-zinc-600 text-transparent hover:border-emerald-500"
-                        )}
-                      >
-                        <Check className="w-5 h-5" />
-                      </button>
-                    </div>
+                    >
+                      <Check className="w-5 h-5" />
+                    </button>
                   </div>
                   
                   {/* Mini habits indicator */}
                   {!isFutureDay && (
-                    <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+                    <div className="flex items-center gap-2 pt-3 mt-2 border-t border-white/5">
                       <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Привычки:</div>
                       <div className="flex gap-1">
                         {Array.from({ length: totalHabits }).map((_, i) => {
@@ -754,13 +785,13 @@ function HabitCard({
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-start p-4 rounded-2xl border transition-all text-left",
+        "flex flex-col items-start p-3 sm:p-4 rounded-2xl border transition-all text-left",
         active
           ? "bg-emerald-950/30 border-emerald-500/50"
           : "bg-zinc-900 border-white/10 hover:bg-zinc-800",
       )}
     >
-      <div className="flex justify-between w-full mb-3">
+      <div className="flex justify-between w-full mb-2 sm:mb-3">
         <div
           className={cn(
             "p-2 rounded-xl",
@@ -779,7 +810,7 @@ function HabitCard({
       </div>
       <span
         className={cn(
-          "font-medium text-sm",
+          "font-medium text-xs sm:text-sm leading-tight",
           active ? "text-emerald-100" : "text-zinc-300",
         )}
       >
