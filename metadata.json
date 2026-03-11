@@ -1,0 +1,5 @@
+{
+  "name": "ROBO Sync Tracker",
+  "description": "Приватный веб-трекер для одного пользователя с синхронизацией данных (Supabase).",
+  "requestFramePermissions": []
+}
