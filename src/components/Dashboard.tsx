@@ -13,6 +13,7 @@ import {
   Home,
   BookOpen,
   History,
+  Wind,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -28,15 +29,20 @@ const getMSKToday = () => {
 };
 
 const GENERAL_RULES = [
-  { label: "ОТДЫХ", value: "45–60 СЕК" },
-  { label: "ТЕМП", value: "1 СЕК ВЗРЫВ / 3 СЕК НЕГАТИВ" },
+  { label: "ТЕМП", value: "1 СЕК ПОДЪЁМ / 3 СЕК ОПУСКАНИЕ" },
   { label: "ПРОГРЕССИЯ", value: "+2.5 КГ ПРИ ВЫПОЛНЕНИИ НОРМЫ" },
 ];
 
 type Exercise = {
   name: string;
-  note: string;
+  muscle: string;
+  why: string;
+  technique: string[];
+  tempo: string;
+  rest: string;
   sets: string;
+  isTimer?: boolean;
+  timerDuration?: number;
 };
 
 type WorkoutDay = {
@@ -48,49 +54,297 @@ type WorkoutDay = {
 const WORKOUT_CYCLE: WorkoutDay[] = [
   {
     id: "back",
-    name: "Спина и Осанка",
+    name: "Спина и Широчайшие",
     exercises: [
-      { name: "Подтягивания", note: "Широкий хват, тянись грудью к перекладине", sets: "3 X ДО ОТКАЗА" },
-      { name: "Тяга верхнего блока", note: "Локти веди строго вниз, не отклоняйся назад", sets: "4 X 12" },
-      { name: "Тяга гантели в наклоне", note: "Корпус параллельно полу, тяни к поясу", sets: "3 X 12 (на руку)" },
-      { name: "Тяга горизонтального блока", note: "Максимальное сведение лопаток в пике", sets: "3 X 12" },
-      { name: "Лицевая тяга (Face Pulls)", note: "Тяни канат к уровню лба, разводи кулаки", sets: "4 X 20" },
-      { name: "Молотки (Hammer Curls)", note: "Кисти смотрят друг на друга", sets: "3 X 12" },
-    ],
+      {
+        name: "Подтягивания широким хватом",
+        muscle: "широчайшие (верхняя часть) + большая круглая",
+        why: "Именно широкий хват и тяга грудью к перекладине активирует верхние волокна широчайших — те, что создают визуальные «крылья» сбоку.",
+        technique: [
+          "Хват шире плеч на 15–20 см",
+          "В нижней точке — полное провисание, лопатки вверх (растяжка широчайших)",
+          "Тянись именно грудью вверх, не головой",
+          "В верхней точке — грудь касается или почти касается перекладины"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "90 секунд",
+        sets: "4 × до отказа"
+      },
+      {
+        name: "Тяга верхнего блока широким хватом",
+        muscle: "широчайшие (средняя и нижняя часть) + зубчатые мышцы",
+        why: "Это «страховка» для подтягиваний — добиваем те же волокна с контролируемым весом. Здесь важна амплитуда вниз.",
+        technique: [
+          "Небольшой наклон корпуса назад (~10–15°) — не больше, иначе включается поясница",
+          "Локти ведёшь вниз, представь что хочешь засунуть их в задние карманы",
+          "В нижней точке — пауза 1 сек, сожми широчайшие",
+          "Вверх медленно, чувствуй как широчайшие растягиваются"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "60 секунд",
+        sets: "4 × 10–12"
+      },
+      {
+        name: "Тяга гантели в наклоне (унилатеральная)",
+        muscle: "широчайшие (нижняя часть) + ромбовидные + задняя дельта",
+        why: "Одна рука позволяет работать с большей амплитудой и лучше изолировать каждую сторону. Нижняя часть широчайших сужает талию визуально.",
+        technique: [
+          "Корпус параллельно полу или чуть выше, упор рукой и коленом",
+          "Гантель в нижней точке — рука полностью прямая, плечо тянется вниз",
+          "Тяни к тазобедренному суставу, не к груди — это ключ для нижних широчайших",
+          "Локоть прижат к корпусу, не разводи в сторону"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "60 секунд после каждой руки",
+        sets: "4 × 10–12 на руку"
+      },
+      {
+        name: "Прямые тяги блока (Straight arm pulldown)",
+        muscle: "широчайшие в изоляции, особенно верхние волокна",
+        why: "Руки остаются прямыми, это выключает бицепс полностью и нагружает только широчайшие. Именно оно создаёт ощущение «крыльев».",
+        technique: [
+          "Стоя, верхний блок, прямая рукоять или канат",
+          "Руки прямые, лёгкий наклон вперёд",
+          "Тяни рукоять вниз дугой к бёдрам, представляй что давишь на что-то",
+          "В нижней точке — задержка 2 сек, почувствуй сокращение сбоку под подмышкой",
+          "Это не силовое — вес умеренный, работай на ощущение"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "45 секунд",
+        sets: "3 × 15"
+      },
+      {
+        name: "Лицевая тяга (Face Pulls)",
+        muscle: "задняя дельта + надостная + ротаторная манжета",
+        why: "Задняя дельта делает плечо объёмным в 3D. Плюс это здоровье ротаторной манжеты — без неё жимовые начнут болеть.",
+        technique: [
+          "Канат на уровне лица или чуть выше",
+          "Тяни к уровню лба, не к шее",
+          "В конечной точке — кулаки разведены в стороны, локти выше кистей",
+          "Пауза 1 сек в конечной точке — прочувствуй заднюю дельту"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "30 секунд",
+        sets: "4 × 20"
+      },
+      {
+        name: "Сгибания с EZ-грифом (нейтральный хват)",
+        muscle: "плечевая мышца (brachialis) + брахиорадиалис предплечья",
+        why: "Прицельно нагружает плечевую мышцу под бицепсом. Именно она выталкивает бицепс вверх и создаёт пик.",
+        technique: [
+          "Берёшь за внутренние изгибы грифа — хват полунейтральный",
+          "Локти прижаты к корпусу, не уходят вперёд",
+          "Подъём без раскачки, строго силой предплечья"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "45 секунд",
+        sets: "3 × 12"
+      }
+    ]
   },
   {
-    id: "chest",
+    id: "chest_shoulders",
     name: "Грудь и Плечи",
     exercises: [
-      { name: "Жим гантелей на накл. скамье", note: "Угол скамьи строго 30°–45°", sets: "3 X 12" },
-      { name: "Жим в тренажере на грудь", note: "Локти не задирай, держи чуть ниже плеч", sets: "3 X 15" },
-      { name: "Отжимания на брусьях", note: "Корпус чуть вперед для акцента на грудь", sets: "3 X 12-15" },
-      { name: "Махи гантелями в стороны", note: "Мизинец чуть выше большого пальца", sets: "5 X 15-20" },
-      { name: "Обратная бабочка (назад)", note: "Не включай трапецию, работай плечом", sets: "3 X 15" },
-      { name: "Разгибание на трицепс", note: "Локти прижаты к корпусу", sets: "4 X 15" },
-    ],
+      {
+        name: "Махи гантелями в стороны (Lateral Raises)",
+        muscle: "средняя (латеральная) головка дельты",
+        why: "Упражнение №1 для твоей цели. Ничто другое не даёт горизонтальной ширины плеч так, как изолированная работа латеральной головки.",
+        technique: [
+          "Лёгкий наклон вперёд ~5°, руки чуть согнуты в локтях",
+          "Подъём строго в стороны, не вперёд",
+          "Мизинец выше большого пальца в верхней точке",
+          "Не поднимай выше параллели с полом — выше включается трапеция"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "30–45 секунд",
+        sets: "6 × 15–20"
+      },
+      {
+        name: "Жим штанги на наклонной скамье (30–45°)",
+        muscle: "верхняя часть большой грудной (ключичная головка)",
+        why: "Верхняя грудь создаёт визуальный выступ и «полку» при взгляде сбоку. Штанга позволяет брать больший вес чем гантели.",
+        technique: [
+          "Угол скамьи строго 30° — выше уходишь на плечи",
+          "Перед первым повтором: сведи лопатки и опусти плечи вниз. Держи это положение весь подход",
+          "Хват чуть шире плеч, не слишком широкий",
+          "Опускай гриф к верхней части груди (не к шее, не к середине)",
+          "Локти под углом ~45° к корпусу, не строго в стороны",
+          "Вверх — не выпрямляй полностью, держи напряжение в груди"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "90 секунд",
+        sets: "4 × 10–12"
+      },
+      {
+        name: "Сведение рук в тренажёре (Pec Fly)",
+        muscle: "вся большая грудная, акцент на растяжение и форму",
+        why: "Жим создаёт объём. Разводка создаёт форму и округлость. Это не силовое, это скульптурное.",
+        technique: [
+          "Руки слегка согнуты в локтях, держи эту форму весь подход",
+          "Опускай до уровня, где чувствуешь сильное растяжение",
+          "Вверх — дуга, как будто обнимаешь большое дерево",
+          "В верхней точке — руки не встречаются, оставь 10 см"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "45 секунд",
+        sets: "3 × 12–15"
+      },
+      {
+        name: "Отжимания на брусьях с наклоном вперёд",
+        muscle: "нижняя и средняя грудная + трицепс",
+        why: "Наклон корпуса вперёд переключает нагрузку с трицепса на грудь. Лучшее упражнение для нижней границы грудной мышцы.",
+        technique: [
+          "Корпус наклонён вперёд ~20–30°",
+          "Опускайся глубоко — ниже параллели, чувствуй растяжку",
+          "Вверх медленно, не до полного выпрямления"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "60 секунд",
+        sets: "3 × до отказа"
+      },
+      {
+        name: "Обратная бабочка (Reverse Pec Deck)",
+        muscle: "задняя дельта + ромбовидные",
+        why: "Самая частая ошибка — трапеция перехватывает нагрузку. Задняя дельта маленькая и слабая — большой вес будет поднимать трапеция.",
+        technique: [
+          "Наклон корпуса вперёд ~45° — без наклона задняя дельта почти не работает",
+          "Локти строго на уровне плеч или чуть ниже — никогда не выше",
+          "Вес смешно лёгкий — скидывай до тех пор пока не почувствуешь работу именно сзади плеча",
+          "Разводи руки медленно, тянись локтями назад и в стороны",
+          "В верхней точке — пауза 2 секунды. Жжение сзади плеча = попал правильно"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "30 секунд",
+        sets: "3 × 15"
+      }
+    ]
   },
   {
-    id: "legs",
-    name: "Ноги и Таз",
+    id: "shoulders_arms_cardio",
+    name: "Плечи повторно + Руки + Кардио",
     exercises: [
-      { name: "Жим ногами", note: "Ноги на ширине плеч, не выпрямляй до конца", sets: "4 X 15" },
-      { name: "Выпады с гантелями", note: "Шаг средней длины, колено не заваливай", sets: "3 X 20 ШАГОВ" },
-      { name: "Румынская тяга", note: "Опускай до середины голени, спина прямая", sets: "3 X 12" },
-      { name: "Ягодичный мостик", note: "Пауза 1 сек в верхней точке", sets: "4 X 15" },
-      { name: "Сгибание ног лежа", note: "Без рывков, плавный возврат", sets: "4 X 15" },
-      { name: "Планка", note: "Держи тело ровно, без прогиба в пояснице", sets: "3 X 90 СЕК" },
-    ],
+      {
+        name: "Кабельные махи в стороны",
+        muscle: "латеральная дельта",
+        why: "Кабель даёт постоянное натяжение во всей амплитуде — особенно в нижней точке. Делай по одной руке.",
+        technique: [
+          "Блок на уровне бедра с противоположной стороны",
+          "Тяни рукоять по дуге вверх в сторону",
+          "В нижней точке — не расслабляй, держи натяжение"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "30 секунд между подходами",
+        sets: "5 × 15–20 (каждая рука)"
+      },
+      {
+        name: "Жим гантелей сидя",
+        muscle: "передняя и средняя дельта + трицепс",
+        why: "Жим над головой создаёт объём и толщину всего плечевого пояса — тот самый купол плеча который виден спереди.",
+        technique: [
+          "Скамья со спинкой строго под 90°, спина прижата к спинке",
+          "Гантели поднимаешь на уровень плеч, локти чуть перед корпусом",
+          "Ладони смотрят вперёд",
+          "Жмёшь вверх над головой, но в верхней точке гантели не сводишь",
+          "Не выпрямляй руки до конца — держи лёгкое сгибание в локтях"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "60–90 секунд",
+        sets: "4 × 10–12"
+      },
+      {
+        name: "Обратная бабочка (Reverse Pec Deck)",
+        muscle: "задняя дельта",
+        why: "Три дня подряд задняя дельта получает нагрузку — это даёт ей объём и 3D форму.",
+        technique: [
+          "Наклон корпуса вперёд ~45°",
+          "Локти строго на уровне плеч или чуть ниже",
+          "Вес смешно лёгкий",
+          "Разводи руки медленно, тянись локтями назад и в стороны",
+          "В верхней точке — пауза 2 секунды"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "30 секунд",
+        sets: "3 × 20"
+      },
+      {
+        name: "Подъём гантелей на бицепс",
+        muscle: "бицепс (длинная головка = пик, короткая = ширина)",
+        why: "Работай с супинацией: кисть разворачивается мизинцем вверх в верхней точке — это максимально включает длинную головку и пик.",
+        technique: [
+          "Стоя, строго без раскачки",
+          "Разворот кисти в верхней точке",
+          "Локти прижаты к корпусу, не уходят вперёд"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "45 секунд",
+        sets: "4 × 12"
+      },
+      {
+        name: "Разгибания на трицепс на блоке",
+        muscle: "трицепс (все три головки, особенно латеральная)",
+        why: "Трицепс занимает 2/3 объёма плеча. Он и создаёт ту «дугу» которую ты описывал.",
+        technique: [
+          "Локти прижаты к корпусу, не двигаются",
+          "Разгибай полностью до блокировки — это важно для латеральной головки",
+          "Медленно вверх"
+        ],
+        tempo: "⬆️ 1 сек подъём / ⬇️ 3 сек опускание",
+        rest: "45 секунд",
+        sets: "4 × 15"
+      },
+      {
+        name: "Вакуум живота",
+        muscle: "поперечная мышца живота (глубокий корсет)",
+        why: "Это упражнение тренирует мышцу, которая буквально удерживает органы и сужает талию изнутри.",
+        technique: [
+          "Стоя или сидя",
+          "Полный выдох до конца",
+          "Втяни живот максимально внутрь и вверх, как будто хочешь коснуться пупком позвоночника",
+          "Держи 20–30 секунд, дыши поверхностно"
+        ],
+        tempo: "⬆️ Удержание",
+        rest: "45 секунд",
+        sets: "5 × 30 секунд",
+        isTimer: true,
+        timerDuration: 30
+      },
+      {
+        name: "Кардио — Аэробайк",
+        muscle: "сжечь жир не трогая мышцы",
+        why: "Аэробайк лучше обычного велотренажёра — подключает руки и плечевой пояс, поэтому расход калорий выше при том же пульсе.",
+        technique: [
+          "Длительность: 40–50 минут",
+          "Темп: равномерный, спокойный — не интервалы, не спринты",
+          "Пульс: 120–140 ударов в минуту",
+          "Если пульс выше 150 — сбавляй темп",
+          "Сопротивление: лёгкое или среднее",
+          "Подсказка: Если задыхаешься и не можешь говорить — слишком быстро"
+        ],
+        tempo: "Равномерный",
+        rest: "Без отдыха",
+        sets: "1 сессия 40–50 минут"
+      }
+    ]
   },
   {
     id: "rest",
     name: "Отдых",
     exercises: [
-      { name: "Восстановление", note: "Сон 8+ часов, массаж или раскатка", sets: "—" },
-      { name: "Легкая растяжка", note: "Упор на грудные и сгибатели бедра", sets: "10-15 МИН" },
-      { name: "Прогулка", note: "Легкое кардио для кровообращения", sets: "10К ШАГОВ" },
-    ],
-  },
+      {
+        name: "Ходьба",
+        muscle: "Восстановление",
+        why: "Ходьба 40 мин — не лежать.",
+        technique: [
+          "Прогулка на свежем воздухе",
+          "Поддержание активности без нагрузки на ЦНС"
+        ],
+        tempo: "Свободный",
+        rest: "-",
+        sets: "40 минут"
+      }
+    ]
+  }
 ];
 
 type HabitData = Record<string, boolean>;
@@ -105,20 +359,176 @@ type ProgressRecord = {
 
 const DIET_PLAN = {
   training: [
-    { id: 'chicken_450', name: 'Куриное филе', amount: '450 г', macros: 'Б:103 Ж:9 У:0', kcal: 495 },
-    { id: 'eggs_4', name: 'Яйца (C1)', amount: '4 шт.', macros: 'Б:26 Ж:22 У:1', kcal: 310 },
-    { id: 'yogurt_140', name: 'Греческий йогурт', amount: '140 г', macros: 'Б:11 Ж:3 У:5', kcal: 95 },
+    { id: 'chicken_450', name: 'Куриная грудка', amount: '450 г', macros: 'Б:99 Ж:10 У:0', kcal: 540 },
+    { id: 'eggs_5', name: 'Яйца целые', amount: '5 шт', macros: 'Б:30 Ж:25 У:1', kcal: 350 },
     { id: 'protein_1', name: 'Протеин', amount: '1 скуп', macros: 'Б:24 Ж:1.5 У:2.5', kcal: 120 },
-    { id: 'rice_200', name: 'Рис (сухой)', amount: '200 г', macros: 'Б:15 Ж:1 У:156', kcal: 690 },
-    { id: 'butter_10', name: 'Сливочное масло', amount: '10 г', macros: 'Б:0 Ж:8 У:0', kcal: 72 },
+    { id: 'yogurt_140', name: 'Греческий йогурт', amount: '140 г', macros: 'Б:8 Ж:3 У:5', kcal: 85 },
+    { id: 'rice_200', name: 'Рис/гречка (варёные)', amount: '200 г', macros: 'Б:5 Ж:1 У:44', kcal: 220 },
+    { id: 'butter_20', name: 'Сливочное масло', amount: '20 г', macros: 'Б:0 Ж:16 У:0', kcal: 150 },
+    { id: 'olive_oil', name: 'Оливковое масло', amount: '1 ст.л.', macros: 'Б:0 Ж:15 У:0', kcal: 135 },
+    { id: 'hot_sauce', name: 'Острый соус (без сахара)', amount: 'Безлимит', macros: 'Б:0 Ж:0 У:0', kcal: 0 },
   ],
   rest: [
-    { id: 'chicken_550', name: 'Куриное филе', amount: '550 г', macros: 'Б:126 Ж:11 У:0', kcal: 605 },
-    { id: 'eggs_4_rest', name: 'Яйца (C1)', amount: '4 шт.', macros: 'Б:26 Ж:22 У:1', kcal: 310 },
-    { id: 'yogurt_140_rest', name: 'Греческий йогурт', amount: '140 г', macros: 'Б:11 Ж:3 У:5', kcal: 95 },
+    { id: 'chicken_450_rest', name: 'Куриная грудка', amount: '450 г', macros: 'Б:99 Ж:10 У:0', kcal: 540 },
+    { id: 'eggs_5_rest', name: 'Яйца целые', amount: '5 шт', macros: 'Б:30 Ж:25 У:1', kcal: 350 },
     { id: 'protein_1_rest', name: 'Протеин', amount: '1 скуп', macros: 'Б:24 Ж:1.5 У:2.5', kcal: 120 },
-    { id: 'butter_10_rest', name: 'Сливочное масло', amount: '10 г', macros: 'Б:0 Ж:8 У:0', kcal: 72 },
+    { id: 'rice_100_rest', name: 'Рис/гречка (варёные)', amount: '100 г', macros: 'Б:2.5 Ж:0.5 У:22', kcal: 110 },
+    { id: 'butter_20_rest', name: 'Сливочное масло', amount: '20 г', macros: 'Б:0 Ж:16 У:0', kcal: 150 },
+    { id: 'veggies', name: 'Овощи (огурцы, салат)', amount: 'Безлимит', macros: 'Б:2 Ж:0 У:10', kcal: 50 },
+    { id: 'hot_sauce_rest', name: 'Острый соус (без сахара)', amount: 'Безлимит', macros: 'Б:0 Ж:0 У:0', kcal: 0 },
   ]
+};
+
+const WEIGHTS = {
+  training: {
+    workout: 35,
+    vacuum: 15,
+    water: 10,
+    sleep: 10,
+    creatine: 5,
+    chicken_450: 5,
+    eggs_5: 5,
+    protein_1: 4,
+    yogurt_140: 3,
+    rice_200: 3,
+    butter_20: 2,
+    olive_oil: 2,
+    hot_sauce: 1,
+  },
+  rest: {
+    vacuum: 25,
+    water: 20,
+    sleep: 15,
+    chicken_450_rest: 10,
+    eggs_5_rest: 8,
+    protein_1_rest: 5,
+    creatine: 5,
+    rice_100_rest: 4,
+    butter_20_rest: 3,
+    veggies: 3,
+    hot_sauce_rest: 2,
+  }
+};
+
+const THRESHOLDS = {
+  training: 70,
+  rest: 60
+};
+
+const calculateScore = (record: ProgressRecord | undefined, isRestDay: boolean) => {
+  if (!record) return 0;
+  let score = 0;
+  const weights = isRestDay ? WEIGHTS.rest : WEIGHTS.training;
+  
+  if (!isRestDay && record.completed) {
+    score += weights.workout;
+  }
+  
+  Object.entries(record.habit_data || {}).forEach(([key, value]) => {
+    if (value && key in weights) {
+      score += weights[key as keyof typeof weights];
+    }
+  });
+  
+  return Math.min(100, score);
+};
+
+const isDayCompleted = (record: ProgressRecord | undefined, isRestDay: boolean) => {
+  const score = calculateScore(record, isRestDay);
+  const threshold = isRestDay ? THRESHOLDS.rest : THRESHOLDS.training;
+  return score >= threshold;
+};
+
+const ExerciseCard = ({ ex, index }: { ex: Exercise, index: number }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(ex.timerDuration || 0);
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    let interval: any;
+    if (isRunning && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, timeLeft]);
+
+  const toggleTimer = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (timeLeft === 0) setTimeLeft(ex.timerDuration || 0);
+    setIsRunning(!isRunning);
+  };
+
+  return (
+    <div 
+      onClick={() => setExpanded(!expanded)}
+      className="flex flex-col gap-1 text-zinc-300 bg-zinc-900/50 p-4 rounded-xl border border-white/5 cursor-pointer hover:bg-zinc-800/50 transition-colors"
+    >
+      <div className="flex justify-between items-start">
+        <span className="font-bold text-white text-sm">
+          {index + 1}. {ex.name}
+        </span>
+        <span className="text-emerald-400 font-mono text-xs font-bold whitespace-nowrap ml-2 bg-emerald-500/10 px-2 py-1 rounded">
+          {ex.sets}
+        </span>
+      </div>
+      
+      {!expanded && (
+        <span className="text-xs text-zinc-500 line-clamp-1 mt-1">{ex.muscle}</span>
+      )}
+
+      {expanded && (
+        <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2">
+          <div>
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Мышца</span>
+            <p className="text-sm font-bold text-white mt-1">{ex.muscle}</p>
+          </div>
+          
+          <div>
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Зачем это делать</span>
+            <p className="text-sm text-zinc-300 mt-1 leading-relaxed">{ex.why}</p>
+          </div>
+
+          <div>
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Техника</span>
+            <ol className="list-decimal list-inside text-sm text-zinc-300 mt-1 space-y-1.5">
+              {ex.technique.map((step, i) => (
+                <li key={i} className="leading-relaxed">{step}</li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="bg-zinc-950 p-3 rounded-lg border border-white/5 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-zinc-400">Темп:</span>
+              <span className="text-xs font-medium text-emerald-400">{ex.tempo}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-zinc-400">Отдых:</span>
+              <span className="text-xs font-medium text-amber-400">⏱ {ex.rest}</span>
+            </div>
+          </div>
+
+          {ex.isTimer && (
+            <div className="pt-2">
+              <button 
+                onClick={toggleTimer}
+                className={cn(
+                  "w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors",
+                  isRunning ? "bg-amber-500/20 text-amber-500 border border-amber-500/50" : "bg-emerald-500/20 text-emerald-500 border border-emerald-500/50"
+                )}
+              >
+                {isRunning ? `Пауза (${timeLeft} сек)` : timeLeft === 0 ? "Начать заново" : `Старт таймера (${timeLeft} сек)`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default function Dashboard({ session }: { session: any }) {
@@ -293,7 +703,12 @@ export default function Dashboard({ session }: { session: any }) {
     }
   };
 
-  const renderToday = () => (
+  const renderToday = () => {
+    const currentScore = calculateScore(progress, currentWorkout.id === "rest");
+    const currentThreshold = currentWorkout.id === "rest" ? THRESHOLDS.rest : THRESHOLDS.training;
+    const isSuccess = currentScore >= currentThreshold;
+
+    return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
       {/* Countdown */}
       <div className="text-center space-y-1">
@@ -342,6 +757,39 @@ export default function Dashboard({ session }: { session: any }) {
         </div>
       ) : (
         <>
+          {/* Progress Bar */}
+          <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 mb-6">
+            <div className="flex justify-between items-end mb-2">
+              <div>
+                <span className="text-zinc-400 text-xs font-bold uppercase tracking-wider">Прогресс дня</span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className={cn("text-2xl font-black", isSuccess ? "text-emerald-400" : "text-white")}>
+                    {currentScore}%
+                  </span>
+                  <span className="text-zinc-500 text-sm font-medium">/ {currentThreshold}% минимум</span>
+                </div>
+              </div>
+              {isSuccess && (
+                <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
+                  <Check className="w-3 h-3" /> Выполнено
+                </div>
+              )}
+            </div>
+            <div className="h-3 bg-zinc-950 rounded-full overflow-hidden border border-white/5 relative">
+              <div 
+                className="absolute top-0 bottom-0 w-0.5 bg-zinc-500 z-10" 
+                style={{ left: `${currentThreshold}%` }}
+              />
+              <div 
+                className={cn(
+                  "h-full transition-all duration-1000 ease-out",
+                  isSuccess ? "bg-emerald-500" : "bg-amber-500"
+                )}
+                style={{ width: `${currentScore}%` }}
+              />
+            </div>
+          </div>
+
           {/* Workout Card */}
           <div className="bg-zinc-950 border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-emerald-900 opacity-50"></div>
@@ -362,26 +810,13 @@ export default function Dashboard({ session }: { session: any }) {
               <div className="space-y-4 mb-8">
                 <ul className="space-y-3">
                   {currentWorkout.exercises.map((ex, i) => (
-                    <li
-                      key={i}
-                      className="flex flex-col gap-1 text-zinc-300 bg-zinc-900/50 p-3 rounded-xl border border-white/5"
-                    >
-                      <div className="flex justify-between items-start">
-                        <span className="font-bold text-white text-sm">
-                          {i + 1}. {ex.name}
-                        </span>
-                        <span className="text-emerald-400 font-mono text-xs font-bold whitespace-nowrap ml-2 bg-emerald-500/10 px-2 py-1 rounded">
-                          {ex.sets}
-                        </span>
-                      </div>
-                      <span className="text-xs text-zinc-500">{ex.note}</span>
-                    </li>
+                    <ExerciseCard key={i} ex={ex} index={i} />
                   ))}
                 </ul>
 
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mt-6">
                   <p className="text-emerald-400 text-sm font-medium text-center">
-                    Взрыв 1 сек / Негатив 3 сек. Отдых 45-60 сек
+                    Подъём 1 сек / Опускание 3 сек
                   </p>
                 </div>
               </div>
@@ -403,9 +838,17 @@ export default function Dashboard({ session }: { session: any }) {
                 <>
                   <Check className="w-6 h-6" />
                   Тренировка выполнена
+                  <span className="text-xs font-bold text-emerald-500/70 bg-emerald-500/10 px-2 py-1 rounded ml-2">
+                    +{WEIGHTS.training.workout}%
+                  </span>
                 </>
               ) : (
-                <>Начать тренировку</>
+                <>
+                  Начать тренировку
+                  <span className="text-xs font-bold text-white/70 bg-white/20 px-2 py-1 rounded ml-2">
+                    +{WEIGHTS.training.workout}%
+                  </span>
+                </>
               )}
             </button>
           </div>
@@ -415,28 +858,32 @@ export default function Dashboard({ session }: { session: any }) {
             <h3 className="text-lg font-bold px-2">Привычки</h3>
             <div className="grid grid-cols-2 gap-3">
               <HabitCard
-                title="Вода (3.5л)"
+                title="Вода (3л)"
                 icon={<Droplets className="w-5 h-5" />}
                 active={progress?.habit_data.water || false}
                 onClick={() => toggleHabit("water")}
+                weight={currentWorkout.id === "rest" ? WEIGHTS.rest.water : WEIGHTS.training.water}
               />
               <HabitCard
                 title="Креатин (5г)"
                 icon={<Dumbbell className="w-5 h-5" />}
                 active={progress?.habit_data.creatine || false}
                 onClick={() => toggleHabit("creatine")}
+                weight={currentWorkout.id === "rest" ? WEIGHTS.rest.creatine : WEIGHTS.training.creatine}
               />
               <HabitCard
                 title="Сон (7-8ч)"
                 icon={<Home className="w-5 h-5" />}
                 active={progress?.habit_data.sleep || false}
                 onClick={() => toggleHabit("sleep")}
+                weight={currentWorkout.id === "rest" ? WEIGHTS.rest.sleep : WEIGHTS.training.sleep}
               />
               <HabitCard
-                title="10к шагов"
-                icon={<Footprints className="w-5 h-5" />}
-                active={progress?.habit_data.steps || false}
-                onClick={() => toggleHabit("steps")}
+                title="Вакуум живота (5 мин)"
+                icon={<Wind className="w-5 h-5" />}
+                active={progress?.habit_data.vacuum || false}
+                onClick={() => toggleHabit("vacuum")}
+                weight={currentWorkout.id === "rest" ? WEIGHTS.rest.vacuum : WEIGHTS.training.vacuum}
               />
             </div>
 
@@ -445,7 +892,7 @@ export default function Dashboard({ session }: { session: any }) {
               <div className="flex justify-between items-end px-2">
                 <h3 className="text-lg font-bold">Рацион</h3>
                 <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider bg-emerald-500/10 px-2 py-1 rounded-lg">
-                  {currentWorkout.id === "rest" ? "1200 ккал" : "1800 ккал"}
+                  {currentWorkout.id === "rest" ? "~1320 ккал" : "~1800 ккал"}
                 </span>
               </div>
               <div className="space-y-2">
@@ -545,7 +992,7 @@ export default function Dashboard({ session }: { session: any }) {
                     <span className="font-bold text-sm uppercase text-zinc-200 pr-4">{ex.name}</span>
                     <span className="text-emerald-400 font-mono text-xs font-bold whitespace-nowrap">{ex.sets}</span>
                   </div>
-                  <span className="text-xs text-zinc-500 italic">{ex.note}</span>
+                  <span className="text-xs text-zinc-500 italic">{ex.muscle}</span>
                 </div>
               ))}
             </div>
@@ -554,6 +1001,7 @@ export default function Dashboard({ session }: { session: any }) {
       </div>
     </div>
   );
+  };
 
   const renderHistory = () => {
     const allDays = eachDayOfInterval({ start: CYCLE_START_DATE, end: TARGET_DATE });
@@ -776,11 +1224,13 @@ function HabitCard({
   icon,
   active,
   onClick,
+  weight,
 }: {
   title: string;
   icon: React.ReactNode;
   active: boolean;
   onClick: () => void;
+  weight?: number;
 }) {
   return (
     <button
@@ -803,11 +1253,18 @@ function HabitCard({
         >
           {icon}
         </div>
-        {active ? (
-          <Check className="w-5 h-5 text-emerald-500" />
-        ) : (
-          <Circle className="w-5 h-5 text-zinc-600" />
-        )}
+        <div className="flex items-center gap-2">
+          {weight && (
+            <span className="text-[10px] font-bold text-emerald-500/70 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+              +{weight}%
+            </span>
+          )}
+          {active ? (
+            <Check className="w-5 h-5 text-emerald-500" />
+          ) : (
+            <Circle className="w-5 h-5 text-zinc-600" />
+          )}
+        </div>
       </div>
       <span
         className={cn(
